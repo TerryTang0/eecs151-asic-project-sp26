@@ -85,6 +85,13 @@ module ALUTestVectorTestbench;
     for (i = 0; i < testcases; i = i + 1) begin
       // TODO: unpack testvector[i] into opcode/funct/add_rshift_type/A/B/REFout,
       // drive inputs, wait as needed, then call checkOutput(opcode, funct, add_rshift_type).
+      opcode = testvector[i][106:100];
+      funct = testvector[i][99:97];
+      add_rshift_type = testvector[i][96];
+      A = testvector[i][95:64];
+      B = testvector[i][63:32];
+      REFout = testvector[i][31:0];
+      checkOutput(opcode, funct, add_rshift_type);
     end
 
     $display("\n\nALL TESTS PASSED!");
