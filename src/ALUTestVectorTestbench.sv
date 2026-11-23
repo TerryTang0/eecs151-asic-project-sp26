@@ -91,6 +91,7 @@ module ALUTestVectorTestbench;
       A = testvector[i][95:64];
       B = testvector[i][63:32];
       REFout = testvector[i][31:0];
+      #1
       checkOutput(opcode, funct, add_rshift_type);
     end
 
