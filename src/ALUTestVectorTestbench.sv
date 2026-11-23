@@ -79,7 +79,8 @@ module ALUTestVectorTestbench;
   integer i;
 
   initial begin
-    $vcdpluson;
+    $dumpfile("alu.vcd");
+    $dumpvars(0, ALUTestVectorTestbench);
     $readmemb("../../tests/testvectors.input", testvector);
 
     for (i = 0; i < testcases; i = i + 1) begin
@@ -96,7 +97,6 @@ module ALUTestVectorTestbench;
     end
 
     $display("\n\nALL TESTS PASSED!");
-    $vcdplusoff;
     $finish();
   end
 
