@@ -71,7 +71,7 @@ module ALUTestVectorTestbench;
   // testvector input file, which you can find with the command:
   // % wc -l ../tests/testvectors.input
   /////////////////////////////////////////////////////////////////
-  localparam int testcases = 26;
+  localparam int testcases = 130;
 
   // Each testcase has 107:0 => 108 bits total (matches original)
   logic [106:0] testvector [0:testcases-1];
