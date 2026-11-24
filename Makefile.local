@@ -1,0 +1,92 @@
+# Local open-source workflow
+# Run from the project root: make -f Makefile.local <target>
+# Keep the original Berkeley Makefile unchanged.
+
+.DEFAULT_GOAL := help
+
+VERILATOR ?= verilator
+PYTHON    ?= python3
+
+VFLAGS ?= --binary --timing --trace-vcd -Wno-fatal -Wno-TIMESCALEMOD
+
+ALU_TOP   := ALUTestVectorTestbench
+ALU_BUILD := build/alu
+ALU_EXE   := $(ALU_BUILD)/V$(ALU_TOP)
+VECTORS   := tests/testvectors.input
+
+ALU_SRC := \
+	src/Opcode_pkg.sv \
+	src/ALUop_pkg.sv \
+	src/ALU.sv \
+	src/ALUdec.sv \
+	src/ALUTestVectorTestbench.sv
+
+.PHONY: help gen-vectors check-vectors build-alu run-alu sim-alu sim-rtl \
+        runtest syn sta par sim-gl-syn sim-gl-par clean
+
+help:
+	@echo 'Local EECS 151 ASIC flow'
+	@echo '  gen-vectors  Generate random ALU test vectors (overwrites existing file)'
+	@echo '  check-vectors Verify binary vector format and print count'
+	@echo '  build-alu    Compile the ALU testbench with Verilator'
+	@echo '  run-alu      Build if needed, run ALU tests, save sim.log and alu.vcd'
+	@echo '  sim-rtl      Alias for run-alu (Checkpoint 1)'
+	@echo '  sim-alu      Alias for run-alu'
+	@echo '  clean        Remove only the local ALU build directory'
+	@echo '  Future: runtest syn sta par sim-gl-syn sim-gl-par (not configured)'
+
+# Checkpoint 1: ALU verification
+# Generate deliberately, not on every simulation, for reproducible debugging.
+gen-vectors:
+	cd tests && $(PYTHON) ALUTestGen.py
+	$(MAKE) -f Makefile.local check-vectors
+
+check-vectors:
+	@test -s "$(VECTORS)" || { echo 'Missing or empty testvectors.input. Run gen-vectors.'; exit 1; }
+	@awk 'length($$0) != 107 || $$0 ~ /[^01]/ { print "Invalid vector at line " NR; bad=1 } END { print NR " vectors (expected width: 107 bits)"; exit (bad || NR == 0) }' "$(VECTORS)"
+	@echo 'Ensure the testbench testcases parameter matches this count.'
+
+# Package definitions must be compiled before importing modules.
+$(ALU_EXE): $(ALU_SRC) Makefile.local
+	mkdir -p "$(ALU_BUILD)"
+	$(VERILATOR) $(VFLAGS) \
+		--top-module $(ALU_TOP) \
+		--Mdir $(ALU_BUILD) \
+		$(ALU_SRC)
+
+build-alu: $(ALU_EXE)
+
+# Run from build/alu so ../../tests/testvectors.input resolves correctly.
+run-alu: check-vectors $(ALU_EXE)
+	@cd "$(ALU_BUILD)" && { \
+		./V$(ALU_TOP) > sim.log 2>&1; status=$$?; \
+		cat sim.log; \
+		if [ $$status -ne 0 ]; then exit $$status; fi; \
+		if ! grep -Fq 'ALL TESTS PASSED!' sim.log; then \
+			echo 'ALU simulation did not report all tests passed.'; exit 1; \
+		fi; \
+	}
+
+sim-rtl sim-alu: run-alu
+
+# Checkpoints 2-4: reserved interfaces, intentionally fail until configured.
+runtest:
+	@echo 'Not configured: port the CPU harness, RISC-V toolchain and assembly tests (CP2).'; exit 1
+
+syn:
+	@echo 'Not configured: add the Yosys/ABC synthesis script and target cell library (CP4).'; exit 1
+
+sta:
+	@echo 'Not configured: add OpenSTA constraints, Liberty and synthesized netlist (CP4).'; exit 1
+
+par:
+	@echo 'Not configured: add OpenROAD scripts, LEF/Liberty, SRAM macros and floorplan (CP4).'; exit 1
+
+sim-gl-syn:
+	@echo 'Not configured: add synthesized netlist, cell models and compatible testbench (CP4).'; exit 1
+
+sim-gl-par:
+	@echo 'Not configured: add routed netlist, cell models and compatible testbench (CP4).'; exit 1
+
+clean:
+	rm -rf "$(ALU_BUILD)"
