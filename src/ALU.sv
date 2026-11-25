@@ -19,7 +19,6 @@ module ALU (
     output logic [31:0] Out
 );
 
-    // Implement your ALU here, then delete this comment
     always_comb begin
         case(ALUop)
             ALU_ADD: Out = A + B;
