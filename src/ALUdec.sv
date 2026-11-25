@@ -19,7 +19,6 @@ module ALUdec (
   output alu_op_t    ALUop
 );
 
-  // Implement your ALU decoder here, then delete this comment
   always_comb begin
     case(opcode)
       OPC_NOOP: begin
