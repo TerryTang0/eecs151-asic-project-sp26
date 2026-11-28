@@ -3,7 +3,7 @@
 import const_pkg::*;
 
 module CSR #(
-    parameter int unsigned DATA_WIDTH = 32
+    parameter int unsigned DATA_WIDTH = CPU_DATA_BITS
 ) (
     input logic                     clk,
     input logic                     reset,
